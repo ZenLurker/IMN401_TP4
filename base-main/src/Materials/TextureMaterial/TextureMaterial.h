@@ -5,12 +5,6 @@
 
 #include "MaterialGL.h"
 #include "Texture2D.h"
-#include <vector>
-
-struct PhongParams {
-    glm::vec4 coeff;  // les parametres de Phong : coeff.x : ka, coeff.y = kd, coeff.z : ks, coeff.w : s
-    glm::vec3 albedo; // La couleur diffuse
-};
 
 class TextureMaterial : public MaterialGL {
 public:
@@ -60,7 +54,7 @@ protected:
 
     PhongParams param;
 
-    GLint l_View, l_Proj, l_Model, l_PosLum, l_PosCam, l_Phong, l_Albedo;
+    GLint l_View, l_Proj, l_Model, l_PosLum, l_PosCam, l_Phong, l_Albedo, l_displacementScale;
 
     Texture2D *texture_diffuse;
     Texture2D *texture_normals;

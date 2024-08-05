@@ -2,10 +2,12 @@
 #include "EngineGL.h"
 #include "Scene.h"
 
-#include "Materials/BaseMaterial/BaseMaterial.h"
-
+#include "Materials/DisplacementMappingMaterial/DisplacementMaterial.h"
 #include "Materials/TextureMaterial/TextureMaterial.h"
+
 #include "Texture2D.h"
+
+#include <glfw3native.h>
 
 bool EngineGL::init() {
     LOG_INFO << "Initializing Scene" << std::endl;
@@ -14,53 +16,73 @@ bool EngineGL::init() {
     glViewport(0, 0, m_Width, m_Height);
     setClearColor(glm::vec4(.5, .5, .5, 1));
 
+    glm::vec3 albedo = {0.8, 0.8, 0.8};
+    glm::vec4 coefficients = {0.1, 1.0, 0.5, 60.0}; // kd = 1.0, ks = 0.5, ka = 0.1, s = 60.0
+
     // light node L
     Node *L = scene->getNode("L");
     L->frame()->translate(glm::vec3(0, 4.5, 0));
-    // L->frame()->scale(glm::vec3(2.f));
-    L->setModel(scene->m_Models.get<ModelGL>(ObjPath + "Sphere.obj"));
-    scene->getSceneNode()->adopt(L);
+    L->setModel(scene->m_Models.get<ModelGL>(ObjPath + "Sphere5.obj"));
+    Texture2D *textureLight = new Texture2D(ObjPath + "Textures/moon_heightMap.jpg");
+    Texture2D *textureLightHeightMap = new Texture2D(ObjPath + "Textures/moon_heightMap.jpg");
 
-    BaseMaterial *lightMaterial = new BaseMaterial("light");
-    L->setMaterial(lightMaterial);
+    DisplacementMaterial *matLight = new DisplacementMaterial("Light");
+    matLight->setDiffuseTexture(textureLight);
+    matLight->setNormalMap(textureLightHeightMap);
+    matLight->setPhong(albedo, coefficients);
+    // BaseMaterial *lightMaterial = new BaseMaterial("light");
+    L->setMaterial(matLight);
 
     // Objets et texture de la boite
     Node *box = scene->getNode("Box");
     box->frame()->scale(glm::vec3(4.0f));
     box->setModel(scene->m_Models.get<ModelGL>(ObjPath + "Box.obj"));
     Texture2D *textureBox = new Texture2D(ObjPath + "Textures/Box_diff.jpg");
-    Texture2D *textureBoxN = new Texture2D(ObjPath + "Textures/Box_nrm.jpg");
+    Texture2D *textureBoxN = new Texture2D(ObjPath + "Textures/Box_HeightMap.png");
 
     //*************************** TP4 : Exemple d intégration avec le matériau TextureMaterial
 
     TextureMaterial *matBox = new TextureMaterial("matBox");
     matBox->setDiffuseTexture(textureBox);
     matBox->setNormalMap(textureBoxN);
-    matBox->setPhong(glm::vec3(0.8, 0.8, 0.8), glm::vec4(0.2, 0.8, 1.0, 100.0)); // kd = 1.0, ks = 0.5, ka = 0.1, s = 60.0
+    matBox->setPhong(albedo, coefficients);
     box->setMaterial(matBox);
 
     /********************************** */
-
+    // (0,0.775,0) is the center of the pillar
     // Pillar
     Node *pillar = scene->getNode("Pillar");
     pillar->frame()->scale(glm::vec3(4.0f));
     pillar->setModel(scene->m_Models.get<ModelGL>(ObjPath + "Pillar.obj"));
     Texture2D *texturePillar = new Texture2D(ObjPath + "Textures/Pillar_diff.jpg");
-    Texture2D *texturePillarN = new Texture2D(ObjPath + "Textures/Pillar_nrm.jpg");
+    Texture2D *texturePillarN = new Texture2D(ObjPath + "Textures/Pillar_HeightMap.png");
 
     /*************************** TP4 : Exemple d intégration avec le matériau TextureMaterial*/
     TextureMaterial *matPillar = new TextureMaterial("matPillar");
     matPillar->setDiffuseTexture(texturePillar);
     matPillar->setNormalMap(texturePillarN);
-    matPillar->setPhong(glm::vec3(0.8, 0.8, 0.8), glm::vec4(0.2, 0.8, 1.0, 100.0)); // kd = 1.0, ks = 0.5, ka = 0.1, s = 60.0
+    matPillar->setPhong(albedo, coefficients);
     pillar->setMaterial(matPillar);
     /********************************** */
 
-    // (0,0.775,0) is the center of the pillar
+    // Brick wall
+    Node *brickWall = scene->getNode("BrickWall");
+    brickWall->frame()->scale(glm::vec3(5.f));
+    brickWall->setModel(scene->m_Models.get<ModelGL>(ObjPath + "Wall.obj"));
+    Texture2D *textureBrickWall = new Texture2D(ObjPath + "Textures/BrickL.png");
+    Texture2D *textureBrickWallHeightMap = new Texture2D(ObjPath + "Textures/Brick_HeightMap.png");
+
+    DisplacementMaterial *matBrickWall = new DisplacementMaterial("matBrickWall");
+    matBrickWall->setDiffuseTexture(textureBrickWall);
+    matBrickWall->setNormalMap(textureBrickWallHeightMap);
+    matBrickWall->setPhong(albedo, coefficients);
+    brickWall->setMaterial(matBrickWall);
+    //**********************************
 
     scene->getSceneNode()->adopt(L);
     scene->getSceneNode()->adopt(box);
     scene->getSceneNode()->adopt(pillar);
+    scene->getSceneNode()->adopt(brickWall);
 
     setupEngine();
     return (true);
