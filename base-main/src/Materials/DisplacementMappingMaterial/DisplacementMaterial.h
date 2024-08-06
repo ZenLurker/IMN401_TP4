@@ -42,7 +42,7 @@ public:
 
     virtual void displayInterface();
 
-    void setNormalMap(Texture2D *textureNormals);
+    void setHeightMap(Texture2D *heightTexture);
 
     void setDiffuseTexture(Texture2D *textureDiffuse);
 
@@ -57,7 +57,7 @@ protected:
     GLint l_View, l_Proj, l_Model, l_PosLum, l_PosCam, l_Phong, l_Albedo, l_displacementScale;
 
     Texture2D *texture_diffuse;
-    Texture2D *texture_normals;
+    Texture2D *height_texture;
 };
 
 #endif

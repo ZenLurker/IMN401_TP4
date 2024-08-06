@@ -8,10 +8,13 @@
 #include <glm/glm.hpp>
 #include <string>
 
+#include "Effects/ColorGrading/ColorGrading.h"
 #include "FrameBufferObject.h"
 
 #include "Effects/Display/Display.h"
 #include "Effects/Flou/Flou.h"
+#include "Effects/GodRays/GodRays.h"
+#include "Effects/GrayScale/GrayScale.h"
 
 class EngineGL {
 public:
@@ -53,5 +56,8 @@ protected:
     FrameBufferObject *myFBO;
     Display *display;
     Flou *flou;
+    GodRays *godRays;
+    GrayScale *grayScale;
+    ColorGrading *colorGrading;
 };
 #endif

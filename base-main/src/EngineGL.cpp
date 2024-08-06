@@ -5,6 +5,7 @@
 #include "Materials/DisplacementMappingMaterial/DisplacementMaterial.h"
 #include "Materials/TextureMaterial/TextureMaterial.h"
 
+#include "Materials/BaseMaterial/BaseMaterial.h"
 #include "Texture2D.h"
 
 #include <glfw3native.h>
@@ -16,21 +17,40 @@ bool EngineGL::init() {
     glViewport(0, 0, m_Width, m_Height);
     setClearColor(glm::vec4(.5, .5, .5, 1));
 
+    myFBO = new FrameBufferObject("", 2048, 2048);
+    godRays = scene->getEffect<GodRays>("GodRays");
+    display = scene->getEffect<Display>("Display");
+    colorGrading = scene->getEffect<ColorGrading>("ColorGrading");
+
+    Texture2D *texture_LUT = new Texture2D(ObjPath + "Textures/MultiLut_atlas1.png ");
+    colorGrading = scene->getEffect<ColorGrading>("ColorGrading");
+
+    colorGrading->addLut(texture_LUT);
+
+    glm::vec3 moonAlbedo = {1, 1, 1};
     glm::vec3 albedo = {0.8, 0.8, 0.8};
     glm::vec4 coefficients = {0.1, 1.0, 0.5, 60.0}; // kd = 1.0, ks = 0.5, ka = 0.1, s = 60.0
 
+    // Moon object with displacement mapping
+    Node *moon = scene->getNode("Moon");
+    moon->frame()->translate(glm::vec3(0, 15, 0));
+    moon->frame()->scale(glm::vec3(0.35f));
+    moon->setModel(scene->m_Models.get<ModelGL>(ObjPath + "HighPolySphere.obj"));
+    Texture2D *textureMoon = new Texture2D(ObjPath + "Textures/moon_heightMap.jpg");
+    Texture2D *textureMoonHeightMap = new Texture2D(ObjPath + "Textures/moon_heightMap.jpg");
+
+    DisplacementMaterial *matMoon = new DisplacementMaterial("Light");
+    matMoon->setDiffuseTexture(textureMoon);
+    matMoon->setHeightMap(textureMoonHeightMap);
+    matMoon->setPhong(moonAlbedo, coefficients);
+    moon->setMaterial(matMoon);
+
     // light node L
     Node *L = scene->getNode("L");
-    L->frame()->translate(glm::vec3(0, 4.5, 0));
-    L->setModel(scene->m_Models.get<ModelGL>(ObjPath + "Sphere5.obj"));
-    Texture2D *textureLight = new Texture2D(ObjPath + "Textures/moon_heightMap.jpg");
-    Texture2D *textureLightHeightMap = new Texture2D(ObjPath + "Textures/moon_heightMap.jpg");
+    L->frame()->translate(glm::vec3(0, 10, 0));
+    L->setModel(scene->m_Models.get<ModelGL>(ObjPath + "Sphere.obj"));
 
-    DisplacementMaterial *matLight = new DisplacementMaterial("Light");
-    matLight->setDiffuseTexture(textureLight);
-    matLight->setNormalMap(textureLightHeightMap);
-    matLight->setPhong(albedo, coefficients);
-    // BaseMaterial *lightMaterial = new BaseMaterial("light");
+    BaseMaterial *matLight = new BaseMaterial("Light");
     L->setMaterial(matLight);
 
     // Objets et texture de la boite
@@ -38,7 +58,7 @@ bool EngineGL::init() {
     box->frame()->scale(glm::vec3(4.0f));
     box->setModel(scene->m_Models.get<ModelGL>(ObjPath + "Box.obj"));
     Texture2D *textureBox = new Texture2D(ObjPath + "Textures/Box_diff.jpg");
-    Texture2D *textureBoxN = new Texture2D(ObjPath + "Textures/Box_HeightMap.png");
+    Texture2D *textureBoxN = new Texture2D(ObjPath + "Textures/Box_nrm.jpg");
 
     //*************************** TP4 : Exemple d intégration avec le matériau TextureMaterial
 
@@ -55,7 +75,7 @@ bool EngineGL::init() {
     pillar->frame()->scale(glm::vec3(4.0f));
     pillar->setModel(scene->m_Models.get<ModelGL>(ObjPath + "Pillar.obj"));
     Texture2D *texturePillar = new Texture2D(ObjPath + "Textures/Pillar_diff.jpg");
-    Texture2D *texturePillarN = new Texture2D(ObjPath + "Textures/Pillar_HeightMap.png");
+    Texture2D *texturePillarN = new Texture2D(ObjPath + "Textures/Pillar_nrm.jpg");
 
     /*************************** TP4 : Exemple d intégration avec le matériau TextureMaterial*/
     TextureMaterial *matPillar = new TextureMaterial("matPillar");
@@ -65,34 +85,30 @@ bool EngineGL::init() {
     pillar->setMaterial(matPillar);
     /********************************** */
 
-    // Brick wall
-    Node *brickWall = scene->getNode("BrickWall");
-    brickWall->frame()->scale(glm::vec3(5.f));
-    brickWall->setModel(scene->m_Models.get<ModelGL>(ObjPath + "Wall.obj"));
-    Texture2D *textureBrickWall = new Texture2D(ObjPath + "Textures/BrickL.png");
-    Texture2D *textureBrickWallHeightMap = new Texture2D(ObjPath + "Textures/Brick_HeightMap.png");
-
-    DisplacementMaterial *matBrickWall = new DisplacementMaterial("matBrickWall");
-    matBrickWall->setDiffuseTexture(textureBrickWall);
-    matBrickWall->setNormalMap(textureBrickWallHeightMap);
-    matBrickWall->setPhong(albedo, coefficients);
-    brickWall->setMaterial(matBrickWall);
-    //**********************************
-
     scene->getSceneNode()->adopt(L);
     scene->getSceneNode()->adopt(box);
     scene->getSceneNode()->adopt(pillar);
-    scene->getSceneNode()->adopt(brickWall);
+    scene->getSceneNode()->adopt(moon);
 
     setupEngine();
     return (true);
 }
 
 void EngineGL::render() {
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    myFBO->enable();
+
     glEnable(GL_DEPTH_TEST);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
     for (unsigned int i = 0; i < allNodes->nodes.size(); i++)
         allNodes->nodes[i]->render();
+
+    myFBO->disable();
+
+    display->apply(myFBO, NULL);
+    colorGrading->apply(myFBO, NULL);
+    godRays->apply(myFBO, NULL);
 }
 
 void EngineGL::animate(const float elapsedTime) {

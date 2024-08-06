@@ -54,7 +54,7 @@ protected:
 
     PhongParams param;
 
-    GLint l_View, l_Proj, l_Model, l_PosLum, l_PosCam, l_Phong, l_Albedo, l_displacementScale;
+    GLint l_View, l_Proj, l_Model, l_PosLum, l_PosCam, l_Phong, l_Albedo;
 
     Texture2D *texture_diffuse;
     Texture2D *texture_normals;

@@ -20,7 +20,6 @@ TextureMaterial::TextureMaterial(std::string name) : MaterialGL(name) {
     l_PosCam = glGetUniformLocation(vp->getId(), "PosCam");
     l_Phong = glGetUniformLocation(fp->getId(), "Phong");
     l_Albedo = glGetUniformLocation(fp->getId(), "diffuseAlbedo");
-    l_displacementScale = glGetUniformLocation(vp->getId(), "displacementScale");
 
     param.albedo = glm::vec3(0.8, 0.8, 0.8);
     param.coeff = glm::vec4(0.2, 0.8, 1.0, 100.0);
@@ -59,7 +58,6 @@ void TextureMaterial::animate(Node *o, const float elapsedTime) {
     glProgramUniform3fv(vp->getId(), l_PosLum, 1, glm::value_ptr(Scene::getInstance()->getNode("L")->frame()->convertPtTo(glm::vec3(0.0, 0.0, 0.0), o->frame())));
     // convertir le point (0,0,0) du repère camera vers le repere de l'objet
     glProgramUniform3fv(vp->getId(), l_PosCam, 1, glm::value_ptr(Scene::getInstance()->camera()->frame()->convertPtTo(glm::vec3(0.0, 0.0, 0.0), o->frame())));
-    glProgramUniform1f(vp->getId(), l_displacementScale, 0.1f);
 }
 
 void TextureMaterial::updatePhong() {

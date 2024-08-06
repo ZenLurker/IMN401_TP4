@@ -7,8 +7,8 @@ const GLint UNITS_PER_SECTION = 5;
 
 DisplacementMaterial::DisplacementMaterial(std::string name) : MaterialGL(name) {
 
-    vp = new GLProgram(MaterialPath + "TextureMaterial/TextureMaterial-VS.glsl", GL_VERTEX_SHADER);
-    fp = new GLProgram(MaterialPath + "TextureMaterial/TextureMaterial-FS.glsl", GL_FRAGMENT_SHADER);
+    vp = new GLProgram(MaterialPath + "DisplacementMappingMaterial/DisplacementMaterial-VS.glsl", GL_VERTEX_SHADER);
+    fp = new GLProgram(MaterialPath + "DisplacementMappingMaterial/DisplacementMaterial-FS.glsl", GL_FRAGMENT_SHADER);
 
     m_ProgramPipeline->useProgramStage(vp, GL_VERTEX_SHADER_BIT);
     m_ProgramPipeline->useProgramStage(fp, GL_FRAGMENT_SHADER_BIT);
@@ -35,7 +35,7 @@ void DisplacementMaterial::render(Node *o) {
 
     m_ProgramPipeline->bind();
     glBindTextureUnit(0, texture_diffuse->getId());
-    glBindTextureUnit(1, texture_normals->getId());
+    glBindTextureUnit(1, height_texture->getId());
 
     o->drawGeometry(GL_TRIANGLES);
 
@@ -59,7 +59,7 @@ void DisplacementMaterial::animate(Node *o, const float elapsedTime) {
     glProgramUniform3fv(vp->getId(), l_PosLum, 1, glm::value_ptr(Scene::getInstance()->getNode("L")->frame()->convertPtTo(glm::vec3(0.0, 0.0, 0.0), o->frame())));
     // convertir le point (0,0,0) du repère camera vers le repere de l'objet
     glProgramUniform3fv(vp->getId(), l_PosCam, 1, glm::value_ptr(Scene::getInstance()->camera()->frame()->convertPtTo(glm::vec3(0.0, 0.0, 0.0), o->frame())));
-    glProgramUniform1f(vp->getId(), l_displacementScale, 1.f);
+    glProgramUniform1f(vp->getId(), l_displacementScale, 0.75f);
 }
 
 void DisplacementMaterial::updatePhong() {
@@ -80,8 +80,8 @@ void DisplacementMaterial::displayInterface() {
         updatePhong();
 }
 
-void DisplacementMaterial::setNormalMap(Texture2D *textureNormals) {
-    texture_normals = textureNormals;
+void DisplacementMaterial::setHeightMap(Texture2D *heightTexture) {
+    height_texture = heightTexture;
 }
 
 void DisplacementMaterial::setDiffuseTexture(Texture2D *textureDiffuse) {
